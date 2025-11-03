@@ -1,0 +1,24 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Install prerequisites for apt-key
+      ansible.builtin.apt:
+        name:
+          - gnupg
+          - dirmngr
+          - apt-transport-https
+          - ca-certificates
+        state: present
+        update_cache: true
+      become: true
+
+    - name: Prevent services from starting during package installation
+      ansible.builtin.copy:
+        content: |
+          #!/bin/sh
+          exit 101
+        dest: /usr/sbin/policy-rc.d
+        mode: '0755'
+      become: true

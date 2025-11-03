@@ -1,10 +1,23 @@
 ---
-# This is an example playbook to execute Ansible tests.
-
 - name: Verify
   hosts: all
-  gather_facts: false
+  gather_facts: true
   tasks:
-  - name: Example assertion
-    assert:
-      that: true
+    - name: Check clickhouse-server is running
+      ansible.builtin.service:
+        name: clickhouse-server
+        state: started
+      check_mode: true
+      register: service_status
+      failed_when: service_status.changed
+
+    - name: Verify clickhouse-server responds
+      ansible.builtin.command: clickhouse-client --query "SELECT 1"
+      changed_when: false
+      register: clickhouse_check
+
+    - name: Assert clickhouse is working
+      ansible.builtin.assert:
+        that:
+          - clickhouse_check.rc == 0
+          - "'1' in clickhouse_check.stdout"
